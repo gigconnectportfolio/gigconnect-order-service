@@ -1,0 +1,17 @@
+FROM node:20.15.0
+
+ARG NPM_TOKEN
+WORKDIR /app
+COPY package*.json ./
+COPY tsconfig.json ./
+COPY nodemon.json ./
+COPY src ./src
+
+RUN echo "@kariru-k:registry=https://npm.pkg.github.com/kariru-k" > .npmrc && \
+    echo "//npm.pkg.github.com/:_authToken=${NPM_TOKEN}" >> .npmrc
+
+RUN ls -a
+RUN npm install && npm install -g nodemon
+
+EXPOSE 4006
+CMD ["npm", "run", "dev"]

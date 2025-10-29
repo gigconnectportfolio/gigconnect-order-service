@@ -1,0 +1,7 @@
+{
+    "watch": ["src"],
+    "ext": "ts,json",
+    "ignore": ["*.log", "build/", "dist/", "node_modules/", ".git/"],
+    "exec": "tsx src/app.ts | pino-pretty -c",
+    "restartable": "rs"
+}
