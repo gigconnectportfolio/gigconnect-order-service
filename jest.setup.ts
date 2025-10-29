@@ -10,5 +10,5 @@ jest.mock('./src/database', () => {
 jest.mock('src/services/message.service');
 jest.mock('@kariru-k/gigconnect-shared');
 jest.mock('src/elasticsearch');
-jest.mock('src/schemes/message');
+jest.mock('src/models/message');
 jest.mock('@elastic/elasticsearch');
