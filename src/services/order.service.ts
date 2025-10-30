@@ -1,5 +1,5 @@
 import {
-    BadRequestError, IDeliveredWork,
+    BadRequestError, IDeliveredWork, IExtendedDelivery,
     IOrderDocument,
     IOrderMessage,
     IVerificationInput,
@@ -320,6 +320,128 @@ export const deliverOrder = async(orderId: string, delivered: boolean, delivered
 
     await publishDirectMessage(orderChannel, 'gigconnect-order-exchange', 'order-email', JSON.stringify(messageDetails), 'Order Delivery message sent to notification service');
     await sendNotification(order, order.buyerUsername, "Your order has been delivered.");
+
+    return order;
+}
+
+export const requestDeliveryExtension = async (orderId: string, data: IExtendedDelivery): Promise<IOrderDocument> => {
+
+    const {newDate, days, reason, originalDate} = data;
+
+    const order: IOrderDocument = await OrderModel.findOneAndUpdate(
+        {orderId: orderId},
+        {
+            $set: {
+                ['requestExtension.originalDate']: originalDate,
+                ['requestExtension.newDate']: newDate,
+                ['requestExtension.days']: days,
+                ['requestExtension.reason']: reason,
+            }
+        },
+        {new: true}
+    ).exec() as IOrderDocument;
+
+    if (!order) {
+        throw new NotFoundError(`Order with ID ${orderId} not found.`, 'OrderService:requestDeliveryExtension');
+    }
+
+    const messageDetails: IOrderMessage = {
+        buyerUsername: lowerCase(order.buyerUsername),
+        sellerUsername: lowerCase(order.sellerUsername),
+        originalDate: originalDate,
+        newDate: newDate,
+        reason: reason,
+        orderUrl: `${config.CLIENT_URL}/orders/${order.orderId}/activities`,
+        template: 'orderExtension',
+    }
+
+    await publishDirectMessage(orderChannel, 'gigconnect-order-exchange', 'order-email', JSON.stringify(messageDetails), 'Order Extension Request message sent to notification service');
+
+    await sendNotification(order, order.buyerUsername, "There is a delivery extension request for your order.");
+    await sendNotification(order, order.sellerUsername, "Your delivery extension request has been sent to the seller.");
+
+    return order;
+}
+
+export const approveDeliveryDateExtension = async (orderId: string, data: IExtendedDelivery): Promise<IOrderDocument> => {
+    const { newDate, days, reason, deliveryDateUpdate} = data;
+    const order: IOrderDocument = await OrderModel.findOneAndUpdate(
+        {orderId: orderId},
+        {
+            $set: {
+                ['offer.newDeliveryDate']: newDate,
+                ['offer.deliveryInDays']: days,
+                ['offer.reason']: reason,
+                ['events.deliveryDateUpdate']: new Date(`${deliveryDateUpdate}`),
+                requestExtension: {
+                    originalDate: '',
+                    newDate: '',
+                    days: 0,
+                    reason: '',
+                }
+            }
+        },
+        {new: true}
+    ).exec() as IOrderDocument;
+
+    if (!order) {
+        throw new NotFoundError(`Order with ID ${orderId} not found.`, 'OrderService:approveDeliveryDateExtension');
+    }
+
+    const messageDetails: IOrderMessage = {
+        subject: 'Delivery Date Extension Approved',
+        buyerUsername: lowerCase(order.buyerUsername),
+        sellerUsername: lowerCase(order.sellerUsername),
+        header: 'Request Accepted',
+        type: 'Accepted',
+        message: 'You can continue working on the order.',
+        orderUrl: `${config.CLIENT_URL}/orders/${order.orderId}/activities`,
+        template: 'orderExtensionApproval',
+    }
+
+    await publishDirectMessage(orderChannel, 'gigconnect-order-exchange', 'order-email', JSON.stringify(messageDetails), 'Order Extension Approval message sent to notification service');
+
+    await sendNotification(order, order.buyerUsername, "Your delivery date extension request has been approved.");
+    await sendNotification(order, order.sellerUsername, "You have approved the delivery date extension request.");
+
+    return order;
+}
+
+export const rejectDeliveryDateExtension = async (orderId: string): Promise<IOrderDocument> => {
+    const order: IOrderDocument = await OrderModel.findOneAndUpdate(
+        {orderId: orderId},
+        {
+            $set: {
+                requestExtension: {
+                    originalDate: '',
+                    newDate: '',
+                    days: 0,
+                    reason: '',
+                }
+            }
+        },
+        {new: true}
+    ).exec() as IOrderDocument;
+
+    if (!order) {
+        throw new NotFoundError(`Order with ID ${orderId} not found.`, 'OrderService:rejectDeliveryDateExtension');
+    }
+
+    const messageDetails: IOrderMessage = {
+        subject: 'Delivery Date Extension Rejected',
+        buyerUsername: lowerCase(order.buyerUsername),
+        sellerUsername: lowerCase(order.sellerUsername),
+        header: 'Request Rejected',
+        type: 'Rejected',
+        message: 'Please adhere to the original delivery date. Contact the Buyer for more information',
+        orderUrl: `${config.CLIENT_URL}/orders/${order.orderId}/activities`,
+        template: 'orderExtensionApproval',
+    }
+
+    await publishDirectMessage(orderChannel, 'gigconnect-order-exchange', 'order-email', JSON.stringify(messageDetails), 'Order Extension Rejection message sent to notification service');
+
+    await sendNotification(order, order.sellerUsername, "Your delivery date extension request has been rejected.");
+    await sendNotification(order, order.buyerUsername, "You have rejected the delivery date extension request.");
 
     return order;
 }
