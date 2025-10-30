@@ -25,6 +25,10 @@ const log: Logger = winstonLogger(`${config.ELASTIC_SEARCH_URL}`, 'Order Service
 export const getOrderByOrderId = async (orderId: string): Promise<IOrderDocument> => {
     const order: IOrderDocument[] = await OrderModel.aggregate([{$match: {orderId: orderId}}]);
 
+    if (order.length === 0) {
+        throw new NotFoundError(`Order with ID ${orderId} not found.`, 'OrderService:getOrderByOrderId');
+    }
+
     return order[0];
 }
 
