@@ -1,7 +1,7 @@
 import {NextFunction, Request, Response} from "express";
-import {orderSchema} from "../schemes/order";
+import {orderSchema} from "../../schemes/order";
 import {BadRequestError, IOrderDocument} from "@kariru-k/gigconnect-shared";
-import {createOrder} from "../services/order.service";
+import {createOrder} from "../../services/order.service";
 import {StatusCodes} from "http-status-codes";
 
 export const order = async(req: Request, res: Response, next: NextFunction): Promise<void> => {

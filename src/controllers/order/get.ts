@@ -1,6 +1,6 @@
 import {NextFunction, Request, Response} from "express";
 import {IOrderDocument} from "@kariru-k/gigconnect-shared";
-import {getOrderByOrderId, getOrdersByBuyerId, getOrdersBySellerId} from "../services/order.service";
+import {getOrderByOrderId, getOrdersByBuyerId, getOrdersBySellerId} from "../../services/order.service";
 import {StatusCodes} from "http-status-codes";
 
 

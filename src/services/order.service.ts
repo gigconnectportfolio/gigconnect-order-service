@@ -291,7 +291,7 @@ export const approveOrder = async (orderId: string, data: IOrderMessage): Promis
     return order;
 }
 
-export const deliverOrder = async(orderId: string, delivered: boolean, deliveredWork: IDeliveredWork): Promise<IOrderDocument> => {
+export const sellerDeliverOrder = async(orderId: string, delivered: boolean, deliveredWork: IDeliveredWork): Promise<IOrderDocument> => {
     const order: IOrderDocument = await OrderModel.findOneAndUpdate({orderId: orderId}, {
         $set:
             {
