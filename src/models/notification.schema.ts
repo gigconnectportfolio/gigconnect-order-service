@@ -1,5 +1,5 @@
-import {model, Schema} from "mongoose";
-import {IOrderNotifcation} from "@kariru-k/gigconnect-shared";
+import {Model, model, Schema} from "mongoose";
+import {IOrderNotification} from "@kariru-k/gigconnect-shared";
 
 const notificationSchema: Schema = new Schema(
     {
@@ -15,4 +15,4 @@ const notificationSchema: Schema = new Schema(
     }
 );
 
-export const OrderNotificationModel =  Model<IOrderNotifcation> = model<IOrderNotifcation>('OrderNotification', notificationSchema, 'OrderNotification');
+export const OrderNotificationModel : Model<IOrderNotification> = model<IOrderNotification>('OrderNotification', notificationSchema, 'OrderNotification');

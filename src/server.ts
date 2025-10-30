@@ -16,7 +16,7 @@ import {Server} from "socket.io";
 
 const SERVER_PORT = 4006;
 const log: Logger = winstonLogger(`${config.ELASTIC_SEARCH_URL}`, 'Order Server', 'debug');
-export let chatChannel: Channel;
+export let orderChannel: Channel;
 export let socketIOOrderObject: Server;
 
 
