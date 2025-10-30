@@ -1,7 +1,13 @@
 import {NextFunction, Request, Response} from "express";
 import {StatusCodes} from "http-status-codes";
 import {orderUpdateSchema} from "../../schemes/order";
-import {BadRequestError, IDeliveredWork, IOrderDocument, uploads} from "@kariru-k/gigconnect-shared";
+import {
+    BadRequestError,
+    IDeliveredWork,
+    IOrderDocument,
+    IVerificationInput,
+    uploads
+} from "@kariru-k/gigconnect-shared";
 import {
     approveDeliveryDateExtension, approveOrder, cancelOrder,
     rejectDeliveryDateExtension,
@@ -10,13 +16,13 @@ import {
 import {UploadApiResponse} from "cloudinary";
 import crypto from "crypto";
 
+
 export const verifyOrderController = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-        const transaction_id = req.query.transaction_id as string;
-        const tx_ref = req.query.tx_ref as string;
+        const transaction_id = req.params.transaction_id;
+        const tx_ref = req.params.tx_ref;
 
         if (!transaction_id || !tx_ref) {
-            log.log('error', '❌ VerifyOrderController: Missing transaction details in query', { query: req.query });
             throw new BadRequestError('Transaction ID and Reference are required in the query string for verification.', 'VerifyOrderController:verifyOrder');
         }
 
@@ -25,11 +31,9 @@ export const verifyOrderController = async (req: Request, res: Response, next: N
             tx_ref,
         };
 
-        log.info(`Initiating verification via query for TxRef: ${tx_ref}, Transaction ID: ${transaction_id}`);
 
         const verifiedOrder = await verifyOrder(verificationData);
 
-        log.info(`✅ Order successfully verified and processed for ID: ${verifiedOrder.orderId}`);
 
         // 4. Send Response
         res.status(StatusCodes.OK).json({
@@ -38,8 +42,6 @@ export const verifyOrderController = async (req: Request, res: Response, next: N
         });
 
     } catch (error) {
-        log.log('error', '❌ VerifyOrderController() Method Error', error);
-        // Pass the error to the Express error handler middleware
         next(error);
     }
 };
@@ -53,6 +55,8 @@ export const cancel = async (req: Request, res: Response, next: NextFunction) =>
         res.status(StatusCodes.OK).json({
             message: 'Order cancelled successfully',
         })
+    } catch (error) {
+        next(error);
     }
 }
 
@@ -85,7 +89,7 @@ export const deliveryDate = async (req: Request, res: Response, next: NextFuncti
 
         const { orderId, type } = req.params;
 
-        const order: IOrderDocument = type === 'approve' ? await approveDeliveryDateExtension(orderId, req.body) : await rejectDeliveryDateExtension(orderId, req.body);
+        const order: IOrderDocument = type === 'approve' ? await approveDeliveryDateExtension(orderId, req.body) : await rejectDeliveryDateExtension(orderId);
 
         res.status(StatusCodes.OK).json({
             message: `Delivery date extension ${type}d successfully`,
