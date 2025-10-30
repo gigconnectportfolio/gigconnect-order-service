@@ -1,7 +1,7 @@
 import {
     BadRequestError, IDeliveredWork, IExtendedDelivery,
     IOrderDocument,
-    IOrderMessage,
+    IOrderMessage, IReviewMessageDetails,
     IVerificationInput,
     lowerCase,
     NotFoundError, winstonLogger
@@ -43,7 +43,6 @@ export const getOrdersBySellerId = async (sellerId: string): Promise<IOrderDocum
 export const getOrdersByBuyerId = async (buyerId: string): Promise<IOrderDocument[]> => {
     return OrderModel.aggregate([{$match: {buyerId: buyerId}}, {$sort: {createdAt: -1}}]);
 }
-
 
 /// CREATE METHODS
 
@@ -442,6 +441,41 @@ export const rejectDeliveryDateExtension = async (orderId: string): Promise<IOrd
 
     await sendNotification(order, order.sellerUsername, "Your delivery date extension request has been rejected.");
     await sendNotification(order, order.buyerUsername, "You have rejected the delivery date extension request.");
+
+    return order;
+}
+
+export const updateOrderReview = async (data: IReviewMessageDetails): Promise<IOrderDocument> => {
+    const order: IOrderDocument = await OrderModel.findOneAndUpdate(
+        {orderId: data.orderId},
+        {
+            $set:
+                data.type === 'buyer-review' ?
+                    {
+                        buyerReview: {
+                            rating: data.rating,
+                            review: data.review,
+                            created: new Date(`${data.createdAt}`),
+                        },
+                        ['events.buyerReview']: new Date(`${data.createdAt}`),
+                    } :
+                    {
+                        sellerReview: {
+                            rating: data.rating,
+                            review: data.review,
+                            created: new Date(`${data.createdAt}`),
+                        },
+                        ['events.sellerReview']: new Date(`${data.createdAt}`),
+                    }
+        },
+        {new: true}
+    ).exec() as IOrderDocument;
+
+    if (!order) {
+        throw new NotFoundError(`Order with ID ${data.orderId} not found.`, 'OrderService:updateOrderReview');
+    }
+
+    await sendNotification(order, data.type === 'buyer-review' ? order.sellerUsername : order.buyerUsername, `left you a ${data.rating} star review.`);
 
     return order;
 }
