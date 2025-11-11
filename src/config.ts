@@ -8,7 +8,8 @@ if(process.env.ENABLE_APM === '1'){
         serverUrl: process.env.ELASTIC_APM_SERVER_URL,
         secretToken: process.env.ELASTIC_APM_SECRET_TOKEN,
         environment: process.env.NODE_ENV,
-        active: process.env.NODE_ENV !== 'development',
+        active: true,
+        logLevel: "trace",
         captureBody: "all",
         errorOnAbortedRequests: true,
         captureErrorLogStackTraces: "always"
