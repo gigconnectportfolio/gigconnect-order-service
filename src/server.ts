@@ -14,6 +14,8 @@ import {Channel} from "amqplib";
 import {createConnection} from "./queues/connection";
 import {Server} from "socket.io";
 import {consumerReviewFanoutMessages} from "./queues/order.consumer";
+import 'express-async-errors';
+
 
 const SERVER_PORT = 4006;
 const log: Logger = winstonLogger(`${config.ELASTIC_SEARCH_URL}`, 'Order Server', 'debug');
