@@ -18,13 +18,13 @@ export const consumerReviewFanoutMessages = async (channel: Channel): Promise<vo
 
         await channel.assertExchange(exchangeName, 'fanout', {durable: true});
 
-        const jobberQueue: Replies.AssertQueue = await channel.assertQueue(queueName, {
+        const gigConnectQueue: Replies.AssertQueue = await channel.assertQueue(queueName, {
             durable: true,
             autoDelete: false
         });
-        await channel.bindQueue(jobberQueue.queue, exchangeName, '');
+        await channel.bindQueue(gigConnectQueue.queue, exchangeName, '');
 
-        channel.consume(jobberQueue.queue, async (msg: ConsumeMessage | null) => {
+        channel.consume(gigConnectQueue.queue, async (msg: ConsumeMessage | null) => {
             if (msg) {
                 await updateOrderReview(JSON.parse(msg.content.toString()));
                 channel.ack(msg);
